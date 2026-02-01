@@ -21,7 +21,8 @@ WORLD = {
         "name": "the Hallway",
         "desc": "A narrow corridor with flickering torches. You hear distant dripping water.",
         "exits": {"west": "training_room", "north": "armory"},
-        "items": [],
+        "items": ["bandage"],
+
     },
     "armory": {
         "name": "the Armory",
@@ -33,6 +34,8 @@ WORLD = {
 
 
 def look(state):
+    print(f"(HP: {state['hp']}/{state['max_hp']})")
+
     room = WORLD[state["location"]]
     print(f"\nYou are in {room['name']}.")
     print(room["desc"])
@@ -123,6 +126,17 @@ def use_item(state, item_name: str):
     elif match.lower() == "rusty sword":
         state["weapon"] = match
         print(f"You equip the {match}. It feels... questionably heroic.")
+    elif match.lower() == "bandage":
+        if state["hp"] >= state["max_hp"]:
+            print("You're already at full health.")
+            return
+
+        heal_amount = 3
+        state["hp"] = min(state["max_hp"], state["hp"] + heal_amount)
+        state["inventory"].remove(match)
+        print(f"You use a bandage and heal +{heal_amount} HP.")
+        print(f"(HP: {state['hp']}/{state['max_hp']})")
+
     else:
         print(f"You try to use {match}, but nothing happens.")
 
@@ -160,8 +174,18 @@ def attack(state):
     else:
         print(f"The {enemy['name']} is still up! (HP: {enemy['hp']})")
         # simple counter-attack flavor (no player HP yet)
+        state["hp"] -= 1
         print("It bites your boot and hisses. Rude.\n")
+        if state["hp"] <= 0:
+            print("\nYou collapse dramatically. Game over.")
+            state["is_running"] = False
+        else:
+            print(f"(HP: {state['hp']}/{state['max_hp']})\n")
 
+def status(state):
+    print(f"HP: {state['hp']}/{state['max_hp']}")
+    weapon = state.get("weapon") or "none"
+    print(f"Weapon: {weapon}")
 
 
 def main():
@@ -170,7 +194,10 @@ def main():
         "is_running": True,
         "inventory": [],
         "weapon": None,
-        "enemy": None
+        "enemy": None,
+        "hp": 10,
+        "max_hp": 10,
+
     }
 
     print("Welcome to Dungeon Dash (text edition)!")
@@ -207,6 +234,9 @@ def main():
             use_item(state, "")
         elif cmd in ("attack", "hit"):
             attack(state)
+        elif cmd == "status":
+            status(state)
+
         else:
             print(f"I don't understand '{raw}'. Type 'help'.")
 
