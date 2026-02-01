@@ -1,3 +1,5 @@
+import random
+
 def show_help():
     print("""
 Commands:
@@ -55,6 +57,8 @@ def go_direction(state, direction: str):
     if direction in exits:
         state["location"] = exits[direction]
         look(state)
+        maybe_spawn_enemy(state)
+
     else:
         print(f"You can't go {direction} from here.")
 
@@ -123,6 +127,42 @@ def use_item(state, item_name: str):
         print(f"You try to use {match}, but nothing happens.")
 
 
+def maybe_spawn_enemy(state):
+    # Only spawn in the hallway, and only if no enemy already exists
+    if state["location"] != "hallway" or state["enemy"] is not None:
+        return
+
+    # 40% chance
+    if random.random() < 0.40:
+        state["enemy"] = {"name": "rat", "hp": 3}
+        print("\nA nasty RAT scurries out of the shadows! 🐀")
+        print("Type 'attack' to fight it (or 'go west/north' to run).\n")
+
+
+def attack(state):
+    enemy = state.get("enemy")
+    if not enemy:
+        print("There is nothing to attack.")
+        return
+
+    weapon = state.get("weapon")
+    damage = 2 if weapon else 1
+
+    enemy["hp"] -= damage
+    if weapon:
+        print(f"You swing your {weapon} and deal {damage} damage!")
+    else:
+        print(f"You punch wildly and deal {damage} damage!")
+
+    if enemy["hp"] <= 0:
+        print("The rat collapses. The hallway is safe... for now.")
+        state["enemy"] = None
+    else:
+        print(f"The {enemy['name']} is still up! (HP: {enemy['hp']})")
+        # simple counter-attack flavor (no player HP yet)
+        print("It bites your boot and hisses. Rude.\n")
+
+
 
 def main():
     state = {
@@ -130,6 +170,7 @@ def main():
         "is_running": True,
         "inventory": [],
         "weapon": None,
+        "enemy": None
     }
 
     print("Welcome to Dungeon Dash (text edition)!")
@@ -164,6 +205,8 @@ def main():
             use_item(state, raw[4:])
         elif cmd == "use":
             use_item(state, "")
+        elif cmd in ("attack", "hit"):
+            attack(state)
         else:
             print(f"I don't understand '{raw}'. Type 'help'.")
 
