@@ -65,6 +65,11 @@ def show_inventory(state):
     else:
         print("You are carrying: " + ", ".join(inv))
 
+    weapon = state.get("weapon")
+    if weapon:
+        print(f"Equipped weapon: {weapon}")
+
+
 def take_item(state, item_name: str):
     item_name = item_name.strip().lower()
     if not item_name:
@@ -88,6 +93,35 @@ def take_item(state, item_name: str):
     room_items.remove(match)
     state["inventory"].append(match)
     print(f"You picked up: {match}")
+    
+def use_item(state, item_name: str):
+    item_name = item_name.strip().lower()
+    if not item_name:
+        print("Use what?")
+        return
+
+    # Find exact item in inventory (case-insensitive)
+    match = None
+    for it in state["inventory"]:
+        if it.lower() == item_name:
+            match = it
+            break
+
+    if match is None:
+        print(f"You don't have '{item_name}'.")
+        return
+
+    if match.lower() == "map":
+        room = WORLD[state["location"]]
+        exits = ", ".join(sorted(room["exits"].keys()))
+        print(f"The map shows exits from here: {exits}")
+        print("(Pro tip: maps are mostly confidence with better branding.)")
+    elif match.lower() == "rusty sword":
+        state["weapon"] = match
+        print(f"You equip the {match}. It feels... questionably heroic.")
+    else:
+        print(f"You try to use {match}, but nothing happens.")
+
 
 
 def main():
@@ -95,6 +129,7 @@ def main():
         "location": "training_room",
         "is_running": True,
         "inventory": [],
+        "weapon": None,
     }
 
     print("Welcome to Dungeon Dash (text edition)!")
@@ -125,7 +160,10 @@ def main():
             take_item(state, raw[5:])
         elif cmd == "take":
             take_item(state, "")
-
+        elif cmd.startswith("use "):
+            use_item(state, raw[4:])
+        elif cmd == "use":
+            use_item(state, "")
         else:
             print(f"I don't understand '{raw}'. Type 'help'.")
 
