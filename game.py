@@ -151,7 +151,8 @@ def maybe_spawn_enemy(state):
         state["enemy"] = {"name": "rat", "hp": 3}
         print("\nA nasty RAT scurries out of the shadows! 🐀")
         print("Type 'attack' to fight it (or 'go west/north' to run).\n")
-
+        
+        
 
 def attack(state):
     enemy = state.get("enemy")
@@ -161,12 +162,28 @@ def attack(state):
 
     weapon = state.get("weapon")
     damage = 2 if weapon else 1
+    # 25% miss chance
+    MISS_CHANCE = 0.25
 
+    if random.random() < MISS_CHANCE:
+        print("You swing... and miss!")
+        print("The rat squeaks mockingly.\n")
+        return
+    
+    CRIT_CHANCE = 0.1
+    if random.random() < CRIT_CHANCE:
+        damage *= 2
+        print("Critical hit!")
+    
     enemy["hp"] -= damage
     if weapon:
         print(f"You swing your {weapon} and deal {damage} damage!")
+        if damage is 0 :
+            print('You have missed')
+            state["attack"] = 1
     else:
         print(f"You punch wildly and deal {damage} damage!")
+        state["attack"] = 1
 
     if enemy["hp"] <= 0:
         print("The rat collapses. The hallway is safe... for now.")
@@ -197,6 +214,7 @@ def main():
         "enemy": None,
         "hp": 10,
         "max_hp": 10,
+        "attack": 1
 
     }
 
